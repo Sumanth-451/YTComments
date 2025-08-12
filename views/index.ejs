@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YouTube Comment Analyzer</title>
+  <style>
+   body {
+    font-family: sans-serif;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    text-align: center;
+   }
+   form {
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+   }
+   input {
+    width: 70%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+   }
+   button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+   }
+   button:disabled {
+    background-color: #ccc;
+   }
+   .loading {
+    display: none;
+    margin-top: 20px;
+    font-style: italic;
+   }
+   .results {
+    text-align: left;
+    border-top: 2px solid #eee;
+    padding-top: 20px;
+    margin-top: 20px;
+   }
+   .result-card {
+    border: 1px solid #eee;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+   }
+   .result-card h3 a {
+    text-decoration: none;
+    color: #007bff;
+   }
+   .error {
+    color: red;
+   }
+  </style>
+ </head>
+ <body>
+  <h1>YouTube Comment Analyzer</h1>
+  <form id="analysis-form">
+   <input
+    type="text"
+    id="query-input"
+    placeholder="Enter Youtube query"
+    required
+   />
+   <button type="submit" id="submit-button">Run Workflow</button>
+  </form>
+  <div id="loading-message" class="loading">Analyzing... Please wait.</div>
+  <div id="results-container" class="results"></div>
+
+  <script>
+   const form = document.getElementById('analysis-form');
+   const queryInput = document.getElementById('query-input');
+   const loadingMessage = document.getElementById('loading-message');
+   const resultsContainer = document.getElementById('results-container');
+   const submitButton = document.getElementById('submit-button');
+
+   form.addEventListener('submit', async (event) => {
+    event.preventDefault(); // Prevent page reload
+
+    const query = queryInput.value.trim();
+    if (!query) return;
+
+    // Clear previous results and show loading
+    resultsContainer.innerHTML = '';
+    loadingMessage.style.display = 'block';
+    submitButton.disabled = true;
+
+    try {
+     const response = await fetch('/api/start-analysis', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query }),
+     });
+
+     const data = await response.json();
+     loadingMessage.style.display = 'none';
+     submitButton.disabled = false;
+
+     if (!response.ok) {
+      resultsContainer.innerHTML = `<p class="error">Error: ${data.error || 'Unknown error'}</p>`;
+      return;
+     }
+
+     // Display the JSON result prettily
+     resultsContainer.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+    } catch (error) {
+     loadingMessage.style.display = 'none';
+     submitButton.disabled = false;
+     resultsContainer.innerHTML = `<p class="error">Request failed: ${error.message}</p>`;
+    }
+   });
+  </script>
+ </body>
+</html>
