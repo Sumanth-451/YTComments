@@ -88,7 +88,7 @@
     const query = queryInput.value.trim();
     if (!query) return;
 
-    // Clear previous results and show loading
+    // Clear previous results and show loading state
     resultsContainer.innerHTML = '';
     loadingMessage.style.display = 'block';
     submitButton.disabled = true;
@@ -101,6 +101,7 @@
      });
 
      const data = await response.json();
+     
      loadingMessage.style.display = 'none';
      submitButton.disabled = false;
 
@@ -109,8 +110,29 @@
       return;
      }
 
-     // Display the JSON result prettily
-     resultsContainer.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+     if (!data || data.length === 0) {
+      resultsContainer.innerHTML = `<p class="error">No videos found matching your query. Please try a broader search term or different keywords.</p>`;
+      return;
+     }
+
+     const result = data[0];
+     // --- THIS IS THE ONLY LINE THAT WAS CHANGED ---
+     const spreadsheetUrl = result.SpreadsheetURL;
+
+     if (spreadsheetUrl) {
+      // If the URL exists, display the success card with a link
+      resultsContainer.innerHTML = `
+        <div class="result-card">
+          <h3>Analysis Complete!</h3>
+          <p>Your results are ready. Click the button below to view them in Google Sheets.</p>
+          <a href="${spreadsheetUrl}" target="_blank" rel="noopener noreferrer">Open Google Sheet</a>
+        </div>
+      `;
+     } else {
+      // Fallback message if the URL is somehow missing from the response
+      resultsContainer.innerHTML = `<p class="error">Workflow completed, but the Google Sheet URL was not found.</p>`;
+     }
+
     } catch (error) {
      loadingMessage.style.display = 'none';
      submitButton.disabled = false;
